@@ -1,5 +1,7 @@
 # gobacklight
 
+[![Build Status](https://travis-ci.org/rustx/gobacklight.svg?branch=master)](https://travis-ci.org/rustx/gobacklight)
+
 Copyright (C) 2017 - 2018, rustx
 This is a free software, see the source for copying conditions. There is NO warranty; not even 
 for MERCHANTABILITY or FITNESS for a particular purpose.

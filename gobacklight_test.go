@@ -286,9 +286,6 @@ func (s *GobacklightSuite) TestLoadParamsFileContentMaxKo(c *C) {
 				c.Fatal(err)
 			} else {
 				defer f.Close()
-				//if err := os.Truncate(f.Name(), 0); err != nil {
-				//	c.Fatal(err)
-				//}
 				if _, err := f.WriteString("a"); err != nil {
 					c.Fatal(err)
 				} else {
