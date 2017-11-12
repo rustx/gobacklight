@@ -35,9 +35,9 @@ var (
 	valueMsg    = "Error value must be between 1 and 10"
 	nilMsg      = "Error action is nil"
 	driverMsg   = "Error driver files not found in device path"
-	nooptMsg    = "Error no options"
+	nooptMsg    = "Error no options, try with -h"
 
-	nofileMsg   = "open .*: no such file or directory"
+	nofileMsg = "open .*: no such file or directory"
 
 	driverFiles = [3]string{"brightness", "actual_brightness", "max_brightness"}
 
@@ -267,8 +267,8 @@ func (bc *BrightnessControl) Set() error {
 
 func main() {
 	bc := BrightnessControl{Config: &config}
-	if _, err := flags.Parse(&config); err != nil || len(os.Args) == 1 {
-		fmt.Printf("%s\n%s\n", err, example)
+	if _, err := flags.Parse(&config); err != nil {
+		fmt.Println(example)
 		os.Exit(1)
 	}
 	if err := bc.Init(); err != nil {
@@ -279,7 +279,9 @@ func main() {
 			fmt.Println("An error occured :", err)
 			os.Exit(1)
 		} else {
-			fmt.Printf("%s\n%s\n", out, example)
+			if out != "" {
+				fmt.Println(strings.Trim(out,"\n"))
+			}
 			os.Exit(0)
 		}
 	}
