@@ -3,13 +3,11 @@
 [![Build Status](https://travis-ci.org/rustx/gobacklight.svg?branch=master)](https://travis-ci.org/rustx/gobacklight)
 [![Coverage Status](https://coveralls.io/repos/github/rustx/gobacklight/badge.svg?branch=master)](https://coveralls.io/github/rustx/gobacklight?branch=master)
 
-Copyright (C) 2017 - 2018, rustx
-This is a free software, see the source for copying conditions. There is NO warranty; not even 
-for MERCHANTABILITY or FITNESS for a particular purpose.
-
 ## Description
 
-Gobacklight is a program to control backlight controllers for dell XPS 13 ubuntu laptops.
+Gobacklight is a program to control backlight for dell XPS 13 ubuntu laptops.
+
+It may work on other laptops using vendor acpi, but it has not been tested yet.
 
 ## Features
 
