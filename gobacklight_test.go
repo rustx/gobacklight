@@ -67,6 +67,10 @@ func (s *GobacklightSuite) TearDownTest(c *C) {
 
 	r := rand.New(secret)
 
+	if err := os.Mkdir(syspath, 0755); os.IsNotExist(err) {
+		c.Fatalf("error creating syspath directory : %s", err)
+	}
+
 	bright := r.Intn(500)
 	max := 1000
 
@@ -705,6 +709,49 @@ func (s *GobacklightSuite) TestInitDevicePermissionKo(c *C) {
 	err := bc.Init()
 
 	c.Assert(err, Not(IsNil))
+	c.Assert(bc, Not(IsNil))
+	c.Assert(bc.Path, Not(IsNil))
+	c.Assert(bc.Device, Not(IsNil))
+	c.Assert(bc.Path, Equals, syspath+bc.Device+"/")
+	c.Assert(bc.Brightness, Equals, int64(0))
+	c.Assert(bc.MaxBrightness, Equals, int64(0))
+	c.Assert(bc.ActualBrightness, Equals, int64(0))
+}
+
+func (s *GobacklightSuite) TestInitDeviceDirKo(c *C) {
+	conf := Config{}
+	bc := BrightnessControl{Config: &conf}
+
+	if err := os.RemoveAll(syspath+bc.Device); err != nil {
+		c.Fatalf("%s", err)
+	}
+	err := bc.Init()
+
+	c.Assert(err, Not(IsNil))
+	c.Assert(err, ErrorMatches, "stat .* no such file or directory")
+	c.Assert(bc, Not(IsNil))
+	c.Assert(bc.Path, Not(IsNil))
+	c.Assert(bc.Device, Not(IsNil))
+	c.Assert(bc.Path, Equals, syspath+bc.Device+"/")
+	c.Assert(bc.Brightness, Equals, int64(0))
+	c.Assert(bc.MaxBrightness, Equals, int64(0))
+	c.Assert(bc.ActualBrightness, Equals, int64(0))
+}
+
+func (s *GobacklightSuite) TestInitDeviceDirAFileKo(c *C) {
+	conf := Config{}
+	bc := BrightnessControl{Config: &conf}
+
+	if err := os.RemoveAll(syspath+bc.Device); err != nil {
+		c.Fatalf("%s", err)
+		if _, err := os.Create(syspath+bc.Device); err != nil {
+			c.Fatalf("%s", err)
+		}
+	}
+	err := bc.Init()
+
+	c.Assert(err, Not(IsNil))
+	c.Assert(err, ErrorMatches, "stat .* no such file or directory")
 	c.Assert(bc, Not(IsNil))
 	c.Assert(bc.Path, Not(IsNil))
 	c.Assert(bc.Device, Not(IsNil))

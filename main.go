@@ -35,7 +35,7 @@ var (
 	valueMsg    = "Error value must be between 1 and 10"
 	nilMsg      = "Error action is nil"
 	driverMsg   = "Error driver files not found in device path"
-	nooptMsg    = "Error no options, try with -h"
+	nooptMsg    = "Error no options, try gobacklight -h"
 
 	nofileMsg = "open .*: no such file or directory"
 
@@ -169,7 +169,9 @@ func (bc *BrightnessControl) ValidateOptions(action string) error {
 
 func (bc *BrightnessControl) Init() error {
 	bc.Path = syspath + bc.Config.Device + "/"
-
+	if _, err := os.Stat(bc.Path); os.IsNotExist(err) {
+		return err
+	}
 	if files, err := checkDevice(bc.Path); err != nil {
 		return err
 	} else {
@@ -272,11 +274,13 @@ func main() {
 		os.Exit(1)
 	}
 	if err := bc.Init(); err != nil {
+		fmt.Println("An error occured : ", err)
 		fmt.Println(example)
 		os.Exit(1)
 	} else {
 		if out, err := bc.Run(); err != nil {
 			fmt.Println("An error occured : ", err)
+			fmt.Println(example)
 			os.Exit(1)
 		} else {
 			if out != "" {
