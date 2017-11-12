@@ -42,10 +42,10 @@ var (
 	driverFiles = [3]string{"brightness", "actual_brightness", "max_brightness"}
 
 	example = `Examples :
-	gobacklight -d intel_backlight -g
-	gobacklight -d intel_backlight -i 5
-	gobacklight -d intel_backlight -d 5
-	gobacklight -d intel_backlight -s 25
+	gobacklight -v intel_backlight -g
+	gobacklight -v intel_backlight -i 5
+	gobacklight -v intel_backlight -d 5
+	gobacklight -v intel_backlight -s 25
 `
 )
 
@@ -276,11 +276,11 @@ func main() {
 		os.Exit(1)
 	} else {
 		if out, err := bc.Run(); err != nil {
-			fmt.Println("An error occured :", err)
+			fmt.Println("An error occured : ", err)
 			os.Exit(1)
 		} else {
 			if out != "" {
-				fmt.Println(strings.Trim(out,"\n"))
+				fmt.Println(out)
 			}
 			os.Exit(0)
 		}
