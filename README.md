@@ -19,9 +19,13 @@ Gobacklight is a program to control backlight controllers for dell XPS 13 ubuntu
 
 You need to have the [Golang](https://golang.org/doc/install) SDK installed on your system to install this package.
 
-Then, you can install gobacklight package using go tools:
+Download the gobacklight sources :
 
-`go install github.com/rustx/gobacklight`
+```go get github.com/rustx/gobacklight```
+
+Then, you can install gobacklight package :
+
+```go install github.com/rustx/gobacklight```
 
 Next, you need to add a udev rules file at `/etc/udev/rules.d/90-backlight.rules` allowing the users in the video group to modify the drivers files.
 
