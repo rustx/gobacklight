@@ -10,6 +10,7 @@ import (
 	"github.com/jessevdk/go-flags"
 )
 
+// Config struct parses and validates the options from the command line
 type Config struct {
 	Device string `short:"v" long:"device" default:"intel_backlight" required:"true" description:"brightness device"`
 	Inc    uint   `short:"i" long:"inc" default:"nil" description:"increment brightness up to given percentage between [1 -10]"`
@@ -18,6 +19,7 @@ type Config struct {
 	Get    bool   `short:"g" long:"get" description:"get actual brightness percentage"`
 }
 
+// BrightnessControl is the main object, loading the device values and executing actions.
 type BrightnessControl struct {
 	*Config
 	Path             string
@@ -50,89 +52,93 @@ var (
 )
 
 func readFile(file string) (string, error) {
-	if value, err := ioutil.ReadFile(file); err != nil {
+	value, err := ioutil.ReadFile(file)
+	if err != nil {
 		return "", err
-	} else {
-		return string(value), nil
 	}
+	return string(value), nil
 }
 
 func writeStringToFile(file string, value string) error {
-	if f, err := os.OpenFile(file, os.O_WRONLY, 0644); err != nil {
+	f, err := os.OpenFile(file, os.O_WRONLY, 0644)
+	if err != nil {
 		return err
-	} else {
-		defer f.Close()
-		f.WriteString(value)
-		f.Sync()
-		return nil
 	}
+	defer f.Close()
+	f.WriteString(value)
+	f.Sync()
+	return nil
 }
 
 func checkDevice(path string) ([]os.FileInfo, error) {
 	var result []os.FileInfo
-	if files, err := ioutil.ReadDir(path); err != nil {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
 		return nil, err
-	} else {
-		for _, f := range files {
-			for _, e := range driverFiles {
-				if e == f.Name() {
-					result = append(result, f)
-				}
+	}
+	for _, f := range files {
+		for _, e := range driverFiles {
+			if e == f.Name() {
+				result = append(result, f)
 			}
 		}
 	}
+
 	if len(result) == 3 {
 		return result, nil
-	} else {
-		return nil, fmt.Errorf(driverMsg)
 	}
+	return nil, fmt.Errorf(driverMsg)
 }
 
+// LoadParams reads all files in driver folder, and fills BrightnessControl fields.
+// It expects that your driver folder contains at least 3 files : brightness, actual_brightness, max_brightness.
+// It returns an error when the driver files could not be read, or converted to string.
 func (bc *BrightnessControl) LoadParams(files []os.FileInfo) error {
 	if len(files) == 3 {
 		for _, file := range files {
 			switch file.Name() {
 			case "actual_brightness":
-				if actual, err := readFile(bc.Path + file.Name()); err != nil {
+				actual, err := readFile(bc.Path + file.Name())
+				if err != nil {
 					return err
-				} else {
-					if a, err := strconv.ParseInt(strings.Trim(actual, "\n"), 10, 0); err != nil {
-						return err
-					} else {
-						bc.ActualBrightness = a
-					}
 				}
+				a, err := strconv.ParseInt(strings.Trim(actual, "\n"), 10, 0)
+				if err != nil {
+					return err
+				}
+				bc.ActualBrightness = a
 			case "brightness":
-				if brightness, err := readFile(bc.Path + file.Name()); err != nil {
+				brightness, err := readFile(bc.Path + file.Name())
+				if err != nil {
 					return err
-				} else {
-					if c, err := strconv.ParseInt(strings.Trim(brightness, "\n"), 10, 0); err != nil {
-						return err
-					} else {
-						bc.Brightness = c
-					}
 				}
+				b, err := strconv.ParseInt(strings.Trim(brightness, "\n"), 10, 0)
+				if err != nil {
+					return err
+				}
+				bc.Brightness = b
 			case "max_brightness":
-				if max, err := readFile(bc.Path + file.Name()); err != nil {
+				max, err := readFile(bc.Path + file.Name())
+				if err != nil {
 					return err
-				} else {
-					if m, err := strconv.ParseInt(strings.Trim(max, "\n"), 10, 0); err != nil {
-						return err
-					} else {
-						bc.MaxBrightness = m
-					}
 				}
+				m, err := strconv.ParseInt(strings.Trim(max, "\n"), 10, 0)
+				if err != nil {
+					return err
+				}
+				bc.MaxBrightness = m
 			default:
 				return fmt.Errorf("Error no proper files on driver folder")
 			}
 		}
 		return nil
-	} else {
-		return fmt.Errorf(driverMsg)
 	}
-
+	return fmt.Errorf(driverMsg)
 }
 
+// ValidateOptions validate the settings provided to BrightnessControl with the command line.
+// It checks that a unique action was called with command line, and returns an error when combined actions are called.
+// It also checks the command line values prior to execute actions, and returns an error when not OK.
 func (bc *BrightnessControl) ValidateOptions(action string) error {
 
 	switch action {
@@ -167,73 +173,76 @@ func (bc *BrightnessControl) ValidateOptions(action string) error {
 	return nil
 }
 
+// Init checks if the BrightnessControl can load the values from the device files.
+// It uses the checkDevice helper to ensure all files are present in the device folder given by the command line.
+// It returns an error if the device path doesn't contain files needed.
 func (bc *BrightnessControl) Init() error {
 	bc.Path = syspath + bc.Config.Device + "/"
 	if _, err := os.Stat(bc.Path); os.IsNotExist(err) {
 		return err
 	}
-	if files, err := checkDevice(bc.Path); err != nil {
+	files, err := checkDevice(bc.Path)
+	if err != nil {
 		return err
-	} else {
-		if err := bc.LoadParams(files); err != nil {
-			return err
-		}
 	}
-	return nil
+	return bc.LoadParams(files)
 }
 
+// Run validate BrightnessControl options, and run actions from the command line arguments.
+// When calling the get action it returns the current brightness in stdout, else stdout is empty.
+// It returns an error if the action called encountered an error.
 func (bc *BrightnessControl) Run() (string, error) {
 	if bc.Config.Get == true {
 		if err := bc.ValidateOptions("get"); err != nil {
 			return "", err
 		}
 		v, _ := bc.Get()
-
 		return v, nil
 	}
-
 	if bc.Config.Set > 0 {
 		if err := bc.ValidateOptions("set"); err != nil {
 			return "", err
 		}
-		if err := bc.Set(); err != nil {
+		err := bc.Set()
+		if err != nil {
 			return "", err
-		} else {
-			return "", nil
 		}
-
+		return "", nil
 	}
-
 	if bc.Config.Dec > 0 {
 		if err := bc.ValidateOptions("dec"); err != nil {
 			return "", err
 		}
-		if err := bc.Dec(); err != nil {
+		err := bc.Dec()
+		if err != nil {
 			return "", err
-		} else {
-			return "", nil
 		}
+		return "", nil
 	}
-
 	if bc.Config.Inc > 0 {
 		if err := bc.ValidateOptions("inc"); err != nil {
 			return "", err
 		}
-		if err := bc.Inc(); err != nil {
+		err := bc.Inc()
+		if err != nil {
 			return "", err
-		} else {
-			return "", nil
 		}
+		return "", nil
 	}
 	return "", fmt.Errorf(nooptMsg)
 
 }
 
+// Get returns the current brightness expressed as percentage
+// It uses the MaxBrightness and ActualBrightness fields to return the current Brightness as a percentage.
 func (bc *BrightnessControl) Get() (string, error) {
 	actualPct := strconv.Itoa(int(bc.ActualBrightness) * 100 / int(bc.MaxBrightness))
 	return actualPct, nil
 }
 
+// Inc will increment the current brightness with a percentage between 1 and 10
+// It uses the MaxBrightness and ActualBrightness fields to apply the given percentage to current Brightness.
+// It returns an error if it could not write the new value to the brightness file.
 func (bc *BrightnessControl) Inc() error {
 	value := int(bc.ActualBrightness) + int(int(bc.Config.Inc)*int(bc.MaxBrightness)/100)
 
@@ -245,6 +254,9 @@ func (bc *BrightnessControl) Inc() error {
 	return nil
 }
 
+// Dec will decrement the current brightness with a percentage between 1 and 10
+// It uses the MaxBrightness and ActualBrightness fields to apply the given percentage to current Brightness.
+// It returns an error if it could not write the new value to the brightness file.
 func (bc *BrightnessControl) Dec() error {
 	value := int(bc.ActualBrightness) - int(int(bc.Config.Dec)*int(bc.MaxBrightness)/100)
 
@@ -256,6 +268,9 @@ func (bc *BrightnessControl) Dec() error {
 	return nil
 }
 
+// Set will set the current brightness with a percentage between 1 and 100
+// It uses the MaxBrightness and ActualBrightness fields to apply the given percentage to current Brightness.
+// It returns an error if it could not write the new value to the brightness file.
 func (bc *BrightnessControl) Set() error {
 	value := int(int(bc.Config.Set) * int(bc.MaxBrightness) / 100)
 
@@ -274,12 +289,12 @@ func main() {
 		os.Exit(1)
 	}
 	if err := bc.Init(); err != nil {
-		fmt.Println("An error occured : ", err)
+		fmt.Println("An error occurred : ", err)
 		fmt.Println(example)
 		os.Exit(1)
 	} else {
 		if out, err := bc.Run(); err != nil {
-			fmt.Println("An error occured : ", err)
+			fmt.Println("An error occurred : ", err)
 			fmt.Println(example)
 			os.Exit(1)
 		} else {

@@ -1,6 +1,6 @@
 Gobacklight - a program to control backlight for dell XPS 13 ubuntu laptops.
 
-Copyright (c) 2017-2018 rustx <rustx@teknicity.net>
+Copyright (c) 2017-2018 rustx
 
 All rights reserved.
 

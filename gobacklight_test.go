@@ -28,7 +28,7 @@ func (s *GobacklightSuite) SetUpSuite(c *C) error {
 
 	syspath = filepath.Join(s.dir, "intel_backlight") + "/"
 	if err := os.Mkdir(syspath, 0755); err != nil {
-		c.Fatalf("error creating syspath directory : %s", err)
+		c.Fatal(err)
 	}
 
 	r := rand.New(secret)
@@ -39,23 +39,22 @@ func (s *GobacklightSuite) SetUpSuite(c *C) error {
 	for _, file := range s.files {
 		f, err := os.Create(filepath.Join(syspath, file))
 		if err != nil {
-			c.Fatalf("error creating file : ", file)
+			c.Fatal(err)
 			return err
-		} else {
-			defer f.Close()
-			if file == "actual_brightness" || file == "brightness" {
-				if _, err := f.WriteString(strconv.Itoa(bright)); err != nil {
-					c.Fatalf("error writing file :", file)
-					return err
-				}
-				f.Sync()
-			} else {
-				if _, err := f.WriteString(strconv.Itoa(max)); err != nil {
-					c.Fatalf("error writing file :", file)
-					return err
-				}
-				f.Sync()
+		}
+		defer f.Close()
+		if file == "actual_brightness" || file == "brightness" {
+			if _, err := f.WriteString(strconv.Itoa(bright)); err != nil {
+				c.Fatal(err)
+				return err
 			}
+			f.Sync()
+		} else {
+			if _, err := f.WriteString(strconv.Itoa(max)); err != nil {
+				c.Fatal(err)
+				return err
+			}
+			f.Sync()
 		}
 	}
 	return nil
@@ -68,7 +67,7 @@ func (s *GobacklightSuite) TearDownTest(c *C) {
 	r := rand.New(secret)
 
 	if err := os.Mkdir(syspath, 0755); os.IsNotExist(err) {
-		c.Fatalf("error creating syspath directory : %s", err)
+		c.Fatal(err)
 	}
 
 	bright := r.Intn(500)
@@ -79,17 +78,17 @@ func (s *GobacklightSuite) TearDownTest(c *C) {
 		f, err := os.OpenFile(filepath.Join(syspath, file), os.O_WRONLY, 0644)
 		if err != nil {
 			if f, err := os.Create(filepath.Join(syspath, file)); err != nil {
-				c.Fatalf("error creating file : %s", file)
+				c.Fatal(err)
 			} else {
 				defer f.Close()
 				if file == "actual_brightness" || file == "brightness" {
 					if _, err := f.WriteString(strconv.Itoa(bright)); err != nil {
-						c.Fatalf("error writing file :", file)
+						c.Fatal(err)
 					}
 					f.Sync()
 				} else {
 					if _, err := f.WriteString(strconv.Itoa(max)); err != nil {
-						c.Fatalf("error writing file :", file)
+						c.Fatal(err)
 					}
 					f.Sync()
 				}
@@ -98,12 +97,12 @@ func (s *GobacklightSuite) TearDownTest(c *C) {
 			defer f.Close()
 			if file == "actual_brightness" || file == "brightness" {
 				if _, err := f.WriteString(strconv.Itoa(bright)); err != nil {
-					c.Fatalf("error writing file :", file)
+					c.Fatal(err)
 				}
 				f.Sync()
 			} else {
 				if _, err := f.WriteString(strconv.Itoa(max)); err != nil {
-					c.Fatalf("error writing file :", file)
+					c.Fatal(err)
 				}
 				f.Sync()
 			}
@@ -112,10 +111,7 @@ func (s *GobacklightSuite) TearDownTest(c *C) {
 }
 
 func (s *GobacklightSuite) TearDownSuite(c *C) error {
-	if err := os.RemoveAll(syspath); err != nil {
-		return err
-	}
-	return nil
+	return os.RemoveAll(syspath)
 }
 
 func (s *GobacklightSuite) TestConfig(c *C) {
@@ -229,7 +225,7 @@ func (s *GobacklightSuite) TestReadFileOk(c *C) {
 func (s *GobacklightSuite) TestReadFilePermissionKo(c *C) {
 	for _, f := range s.files {
 		if err := os.Chmod(syspath+f, 0300); err != nil {
-			c.Fatalf("error chmod file ", f)
+			c.Fatal(err)
 		}
 
 		value, err := readFile(syspath + f)
@@ -639,7 +635,7 @@ func (s *GobacklightSuite) TestIncActionFileKo(c *C) {
 	_ = bc.LoadParams(files)
 
 	if err := os.Remove(syspath + "brightness"); err != nil {
-		c.Fatal("error chmod file ")
+		c.Fatal("error remove file ")
 	}
 
 	err := bc.Inc()
@@ -658,7 +654,7 @@ func (s *GobacklightSuite) TestDecActionFileKo(c *C) {
 	_ = bc.LoadParams(files)
 
 	if err := os.Remove(syspath + "brightness"); err != nil {
-		c.Fatal("error chmod file ")
+		c.Fatal("error remove file ")
 	}
 
 	err := bc.Dec()
@@ -677,7 +673,7 @@ func (s *GobacklightSuite) TestSetActionFileKo(c *C) {
 	_ = bc.LoadParams(files)
 
 	if err := os.Remove(syspath + "brightness"); err != nil {
-		c.Fatal("error chmod file ")
+		c.Fatal(err)
 	}
 
 	err := bc.Set()
@@ -704,7 +700,7 @@ func (s *GobacklightSuite) TestInitDevicePermissionKo(c *C) {
 	bc := BrightnessControl{Config: &conf}
 
 	if err := os.Chmod(syspath+bc.Device, 0300); err != nil {
-		c.Fatalf("%s", err)
+		c.Fatal(err)
 	}
 	err := bc.Init()
 
@@ -722,8 +718,8 @@ func (s *GobacklightSuite) TestInitDeviceDirKo(c *C) {
 	conf := Config{}
 	bc := BrightnessControl{Config: &conf}
 
-	if err := os.RemoveAll(syspath+bc.Device); err != nil {
-		c.Fatalf("%s", err)
+	if err := os.RemoveAll(syspath + bc.Device); err != nil {
+		c.Fatal(err)
 	}
 	err := bc.Init()
 
@@ -742,10 +738,10 @@ func (s *GobacklightSuite) TestInitDeviceDirAFileKo(c *C) {
 	conf := Config{}
 	bc := BrightnessControl{Config: &conf}
 
-	if err := os.RemoveAll(syspath+bc.Device); err != nil {
-		c.Fatalf("%s", err)
-		if _, err := os.Create(syspath+bc.Device); err != nil {
-			c.Fatalf("%s", err)
+	if err := os.RemoveAll(syspath + bc.Device); err != nil {
+		c.Fatal(err)
+		if _, err := os.Create(syspath + bc.Device); err != nil {
+			c.Fatal(err)
 		}
 	}
 	err := bc.Init()
@@ -767,7 +763,7 @@ func (s *GobacklightSuite) TestInitFilePermissionKo(c *C) {
 
 	for _, f := range s.files {
 		if err := os.Chmod(syspath+f, 0300); err != nil {
-			c.Fatalf("%s", err)
+			c.Fatal(err)
 		}
 	}
 	err := bc.Init()
