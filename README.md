@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/rustx/gobacklight.svg?branch=master)](https://travis-ci.org/rustx/gobacklight)
 [![Coverage Status](https://coveralls.io/repos/github/rustx/gobacklight/badge.svg?branch=master)](https://coveralls.io/github/rustx/gobacklight?branch=master)
+[![Go Report Card](https://goreportcard.com/badge/github.com/rustx/gobacklight)](https://goreportcard.com/report/github.com/rustx/gobacklight)
 
 ## Description
 
